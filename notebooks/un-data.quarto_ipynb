@@ -1,0 +1,1171 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"un-data qmd edition\"\n",
+        "author: \"andrew richard\"\n",
+        "output:\n",
+        "    html:\n",
+        "        toc: true\n",
+        "jupyter:\n",
+        "  kernelspec:\n",
+        "    display_name: base\n",
+        "    language: python\n",
+        "    name: python3\n",
+        "---\n",
+        "\n",
+        "\n",
+        "## Guided practice\n",
+        "\n",
+        "#### 1.\tDownload the Gross Domestic Product (GDP) per capita dataset from [http://data.un.org/Data.aspx?d=WDI&f=Indicator_Code%3aNY.GDP.PCAP.PP.KD](http://data.un.org/Data.aspx?d=WDI&f=Indicator_Code%3aNY.GDP.PCAP.PP.KD). Rename it to gdp_per_capita.csv and place it in the `data` folder of your project repository. \n",
+        "\n",
+        "\n",
+        "#### 3.\tIn the first cell of your notebook, import the required packages with their customary aliases as follows:\n"
+      ],
+      "id": "40922b6e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "import plotly.express as px\n",
+        "import plotly.io as pio\n",
+        "# in terminal: jupyter nbextension enable --py widgetsnbextension\n",
+        "pio.renderers.default = \"png\""
+      ],
+      "id": "f8106836",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 4.\tUsing the pandas `read_csv()` function, read the GDP dataset into your notebook as a DataFrame called `gdp_df`. After reading it in, inspect the first 10 rows and then inspect the last 10 rows.\n"
+      ],
+      "id": "c8a5617e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_df = pd.DataFrame(pd.read_csv(\"../data/gdp_per_capita.csv\"))\n",
+        "gdp_df.head(3)"
+      ],
+      "id": "58834393",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 5. Drop the 'Value Footnotes' column, and rename the remaining columns to 'Country', 'Year', and 'GDP_Per_Capita'.\n"
+      ],
+      "id": "e04fbc6e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_df = gdp_df.drop(columns=[\"Value Footnotes\"]).rename(\n",
+        "    columns={\"Country or Area\": \"Country\", \"Value\": \"GDP_Per_Capita\"}\n",
+        ") # .drop() removes value footnotes, and .rename(columns={}) names the columns what we want\n",
+        "gdp_df.info() # will show datatypes of each column"
+      ],
+      "id": "9f68d38b",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 6. How many rows and columns does gdp_df have? What are the data types of its columns? If any of the columns are not the expected types, figure out why and fix it.\n",
+        "# change the dtype of the Country column to string\n"
+      ],
+      "id": "8887d0c1"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_df[\"Country\"] = gdp_df[\"Country\"].astype(\"string\")\n",
+        "gdp_df.shape # outputs (rows, columns) "
+      ],
+      "id": "850082f9",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **there are 7662 rows and 3 columns in the dataframe gdp_df, excluding the index column and header rows. The 'Country' column is listed as Object rather than String which indicates more than one data type in the column. Using .astype('string') I can convert the column type to str, although this is not typically necessary in a pandas df** \n",
+        "\n",
+        "#### 7. Which years are represented in this dataset? Take a look at the number of observations per year. What do you notice?\n",
+        "# see the range of years\n"
+      ],
+      "id": "a4e97fac"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "display(gdp_df[\"Year\"].value_counts().sort_index())"
+      ],
+      "id": "347b0f83",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **There are 33 years represented: 1990 - 2022.**\n",
+        "**There are an inconsistent number of measurements taken per year, which indicates a change in the number of countries throughout the time period, or an unmeasured GDP during some years for some countries**\n",
+        "\n",
+        "#### 8. How many countries are represented in this dataset? Which countries are least represented in the dataset? Why do you think these countries have so few observations?\n",
+        "# count the number of unique years in the 'Country' col\n"
+      ],
+      "id": "fcf4f597"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "display(f'Number of unique entries in \"Country\" col = {gdp_df[\"Country\"].nunique()}')"
+      ],
+      "id": "8e4af9b9",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# get the value counts for each country and view the least represented\n"
+      ],
+      "id": "6d8fef09"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_df[\"Country\"].value_counts().tail(7)"
+      ],
+      "id": "b0bd95a2",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **There are 242 uniques values in the 'Country' column. Some of these values are not countries, but areas or regions, so it does not match the listed UN member states number of 195.**\n",
+        "**The least represented countries are Djibouti, Somalia, and a handful of smaller island nations like the cayman islands and countries like Kosovo which have not been high exporters due to war, famine, territorial disputes with neighboring countries, geographic isolation, or lack of resources, etc.**\n",
+        "\n",
+        "#### 9. Create a new dataframe by subsetting `gdp_df` to just the year 2021. Call this new dataframe `gdp_2021`.\n",
+        "# use .loc() to find only the rows that contain the year 2021\n"
+      ],
+      "id": "641bc8a1"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_2021 = gdp_df.loc[gdp_df[\"Year\"] == 2021]\n",
+        "display(gdp_2021)"
+      ],
+      "id": "3f21c6e5",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 10. Use `.describe()` to find the summary statistics for GDP per capita in 2021. \n"
+      ],
+      "id": "51980783"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_2021[\"GDP_Per_Capita\"].describe()"
+      ],
+      "id": "59b18493",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 11. Create a histogram of GDP Per Capita numbers for 2021 (you may wish to adjust the number of bins for your histogram). How would you describe the shape of the distribution?\n"
+      ],
+      "id": "b0d359c0"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_2021_hist = sns.histplot(gdp_2021[\"GDP_Per_Capita\"], bins=20)\n",
+        "plt.title(\"GDP Per Capita for the year 2021\");"
+      ],
+      "id": "7cd7e5e7",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **This is a right skewed histogram with one mode**\n"
+      ],
+      "id": "de509e14"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "plotly_hist = px.histogram(gdp_2021['GDP_Per_Capita'],nbins=20, x='GDP_Per_Capita', title = 'GDP Per Capita for 2021')\n",
+        "plotly_hist"
+      ],
+      "id": "0bd6dc0c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 12. Find the top 5 counties and bottom 5 countries by GDP per capita in 2021.\n",
+        "# Sort gdp_2021 by GDP per capita and view the top 5 countries\n"
+      ],
+      "id": "0e5a47b9"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "display(gdp_2021.nlargest(5, \"GDP_Per_Capita\"))"
+      ],
+      "id": "5ad8b646",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# Sort gdp_2021 by GDP per capita and view the bottom 5 countries\n"
+      ],
+      "id": "84accd14"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "display(gdp_2021.nsmallest(5, \"GDP_Per_Capita\"))"
+      ],
+      "id": "a037a3dd",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **The top five countries are Bermuda, Qatar, Ireland, Singapore, and Luxembourg.**\n",
+        "- **The bottom five countries are Burundi, Central African Republic, DRC, Somalia, and Niger.**\n",
+        "\n",
+        "#### 13. Now, return to the full dataset, `gdp_df`. Pivot the data for 1990 and 2021 (using the pandas `.pivot_table()` method or another method) so that each row corresponds to a country, each column corresponds to a year, and the values in the table give the GDP_Per_Capita amount. Drop any rows that are missing values for either 1990 or 2021. Save the result to a dataframe named `gdp_pivoted`.\n"
+      ],
+      "id": "b05968a3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_pivoted = (\n",
+        "    gdp_df\n",
+        "    [gdp_df[\"Year\"].isin([1990, 2021])]\n",
+        "    .pivot_table(\n",
+        "        values=\"GDP_Per_Capita\",\n",
+        "        index=\"Country\",\n",
+        "        columns=\"Year\")\n",
+        "    .dropna()\n",
+        ")\n",
+        "display(gdp_pivoted)"
+      ],
+      "id": "41571040",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 14. Create a new column in `gdp_pivoted` named `Percent_Change`. This column should contain the percent change in GDP_Per_Capita from 1990 to 2021. Hint: Percent change is calculated as 100*(New Value - Old Value) / Old Value.\n"
+      ],
+      "id": "a5a3fbc3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_pivoted[\"Percent Change\"] = (\n",
+        "    100 * (gdp_pivoted[2021] - gdp_pivoted[1990]) / gdp_pivoted[1990]\n",
+        ")\n",
+        "display(gdp_pivoted.head(3))"
+      ],
+      "id": "aa823ed1",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 15. How many countries experienced a negative percent change in GDP per capita from 1990 to 2021?\n"
+      ],
+      "id": "921245a7"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "num_countries = (gdp_pivoted['Percent Change'] < 0).sum()\n",
+        "display(f'There were {num_countries} countries with a negative % change from 1990 to 2021')"
+      ],
+      "id": "8e2a0481",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **There were 19 countries with a negative percent change from 1990 to 2021**\n",
+        "\n",
+        "#### 16. Which country had the highest % change in GDP per capita? Create a line plot showing this country's GDP per capita for all years from 1990 to 2022. Create another showing the country with the second highest % change in GDP. How do the trends in these countries compare?  \n",
+        "**Bonus:** Put both line charts on the same plot.\n",
+        "\n",
+        "- **Equatorial Guinea had the highest percent change from 1990 to 2021 with a 1463.08% growth**\n",
+        "# determine highest percent change and extract country name \n"
+      ],
+      "id": "5e13d3f3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "highest_pct_change = gdp_pivoted.nlargest(1,'Percent Change').reset_index()['Country']\n",
+        "# determine second highest percent change and extract country name \n",
+        "\n",
+        "second_pct_change = gdp_pivoted.nlargest(2,'Percent Change').nsmallest(1, 'Percent Change').reset_index()['Country']\n",
+        "\n",
+        "# extract data corresponding to the countries from gdp_df\n",
+        "\n",
+        "country_1_data = gdp_df.loc[gdp_df[\"Country\"] == highest_pct_change[0]]\n",
+        "country_1_data_slice = country_1_data[country_1_data[\"Year\"].isin(list(range(1990, 2023)))]\n",
+        "country_2_data = gdp_df.loc[gdp_df[\"Country\"] == second_pct_change[0]]\n",
+        "country_2_data_slice = country_2_data[country_2_data[\"Year\"].isin(list(range(1990, 2023)))]\n",
+        "\n",
+        "# initialize 3 subplots for both countries independent and together\n",
+        "fig, ax = plt.subplots(nrows=1, ncols=3, sharey=True, figsize=(10,6))\n",
+        "fig.tight_layout()\n",
+        "\n",
+        "# Country 1 subplot\n",
+        "plt.subplot(131)\n",
+        "plt.xlabel(\"Year (1990 - 2022)\")\n",
+        "plt.ylabel(\"GDP Per Capita($)\")\n",
+        "plt.title(highest_pct_change[0])\n",
+        "plt.plot(country_1_data_slice[\"Year\"], country_1_data_slice[\"GDP_Per_Capita\"], color='b')\n",
+        "\n",
+        "# Country 2 subplot\n",
+        "plt.subplot(132)\n",
+        "plt.xlabel(\"Year (1990 - 2022)\")\n",
+        "plt.title(second_pct_change[0])\n",
+        "plt.plot(country_2_data_slice[\"Year\"], country_2_data_slice[\"GDP_Per_Capita\"], color='r')\n",
+        "\n",
+        "# Both countries on the same plot\n",
+        "plt.subplot(133)\n",
+        "plt.xlabel(\"Year (1990 - 2022)\")\n",
+        "plt.title(highest_pct_change[0] + ' & ' + second_pct_change[0])\n",
+        "plt.plot(country_2_data_slice[\"Year\"],\n",
+        "    country_2_data_slice[\"GDP_Per_Capita\"],\n",
+        "    color=\"r\",\n",
+        "    label=second_pct_change[0])\n",
+        "plt.plot(\n",
+        "    country_1_data_slice[\"Year\"],\n",
+        "    country_1_data_slice[\"GDP_Per_Capita\"],\n",
+        "    color=\"b\",\n",
+        "    label=highest_pct_change[0],\n",
+        ")\n",
+        "plt.legend();\n",
+        "plt.savefig(\"../data/example.svg\", format = 'svg', dpi = 1200)"
+      ],
+      "id": "76b58ba3",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **These line graphs show Equatorial Guinea's astronomical ascent and then rapid decline in GDP per capita, whereas China has had a near exponential increase in GDP per capita continuously increaseing throughout the time period shown on the plot. These are the top two countries in percent change GDP per capita, though the path taken to get from a similar starting point in 1990 to 2018 is very different.**\n",
+        "\n",
+        "##### Plotly used below for practice\n"
+      ],
+      "id": "21525f17"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_df_top_two = gdp_df[gdp_df['Country'].isin([highest_pct_change[0], second_pct_change[0]])].sort_values(['Country', 'Year'])\n",
+        "gdp_df_top_two['Country'] = gdp_df_top_two['Country'].astype('category')\n",
+        "gdp_df_top_two\n",
+        "\n",
+        "fig = px.line(gdp_df_top_two, x='Year', y='GDP_Per_Capita', facet_col='Country', title='Change in GDP per capita 1990 - 2022')\n",
+        "fig2 = px.line(gdp_df_top_two, x='Year', y='GDP_Per_Capita', color = 'Country', title='Change in GDP per capita 1990 - 2022') \n",
+        "display(fig)\n",
+        "display(fig2)"
+      ],
+      "id": "7afb64c1",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 17. Read in continents.csv contained in the `data` folder into a new dataframe called `continents`. We will be using this dataframe to add a new column to our dataset.\n"
+      ],
+      "id": "1234483b"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "continents = pd.DataFrame(pd.read_csv(\"../data/continents.csv\"))\n",
+        "display(continents.head(3))"
+      ],
+      "id": "4ef3000e",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 18. Merge gdp_df and continents. Keep only the countries that appear in both data frames. Save the result back to gdp_df.\n"
+      ],
+      "id": "7eeb84cb"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# merging the dataframes on the 'Country' column\n",
+        "gdp_df = pd.merge(left=gdp_df, right=continents, on=\"Country\", how=\"inner\", validate='many_to_one')\n",
+        "display(gdp_df.head(5))"
+      ],
+      "id": "e7d09487",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 19. Determine the number of countries per continent. Create a bar chart showing this.\n"
+      ],
+      "id": "7dce5343"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#y = gdp_df.drop_duplicates(subset=\"Country\")[\"Continent\"].value_counts()\n",
+        "fig = (\n",
+        "    plt.bar(gdp_df.drop_duplicates(subset=\"Country\")[\"Continent\"].value_counts().index,\n",
+        "            gdp_df.drop_duplicates(subset=\"Country\")[\"Continent\"].value_counts(),\n",
+        "            color=[\"r\", \"y\", \"g\", \"b\", \"c\", \"w\"])\n",
+        ")\n",
+        "plt.tight_layout()\n",
+        "plt.xlabel(\"Continent\")\n",
+        "plt.ylabel(\"Number of Countries\")\n",
+        "plt.title(\"Number of countries in each continent\");"
+      ],
+      "id": "69d7d003",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "##### Plotly used below for practice\n"
+      ],
+      "id": "60abc095"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "fig = (\n",
+        "    px.histogram(\n",
+        "        gdp_df.drop_duplicates(subset=\"Country\")[\"Continent\"],\n",
+        "        x=\"Continent\",\n",
+        "        title=\"Number of countries in each continent\",\n",
+        "        color=\"Continent\",\n",
+        "    )\n",
+        "    .update_xaxes(categoryorder=\"total descending\")\n",
+        "    .update_layout(yaxis_title=\"Number of countries\")\n",
+        ")\n",
+        "\n",
+        "fig"
+      ],
+      "id": "2a9abb48",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 20. Create a seaborn boxplot showing GDP per capita in 2021 split out by continent. What do you notice?\n"
+      ],
+      "id": "aac94255"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "plt.figure(figsize=(9,5))\n",
+        "sns.boxplot(\n",
+        "    data= gdp_df[gdp_df['Year']==2021],\n",
+        "    x='Continent',\n",
+        "    y='GDP_Per_Capita'\n",
+        ")\n",
+        "plt.tight_layout()\n",
+        "plt.xticks(rotation=45)\n",
+        "plt.ylabel(\"GDP Per Capita\")\n",
+        "plt.xlabel(\"Continent\")\n",
+        "plt.title(\"2021 GDP Per Capita by Continent\");"
+      ],
+      "id": "dfe7ffe9",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **every continent has high gdp countries that produce well outside the upper whisker limit**\n",
+        "- **the IQR for Asia, North America, and Europe are much bigger, suggesting more variability in the GDP per capita on those continents**\n",
+        "- **Africa, Oceania, and South America have smaller IQR and range in general indicating less variability in the AGDP for those continents**\n",
+        "\n",
+        "##### Plotly used below for practice\n"
+      ],
+      "id": "ae1d60a4"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "fig = (\n",
+        "    px.box(gdp_df[gdp_df['Year']==2021],\n",
+        "           x='Continent',\n",
+        "           y='GDP_Per_Capita',\n",
+        "           title='2021 GDP per capita by continent',\n",
+        "           color='Continent')\n",
+        "    .update_xaxes(categoryorder='total ascending')\n",
+        "    .update_layout(yaxis_title=\"GDP per capita\")\n",
+        ")\n",
+        "fig.show()"
+      ],
+      "id": "f52cf3e7",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 21. Download the full csv containing Life expectancy at birth, total (years) from [https://data.worldbank.org/indicator/SP.DYN.LE00.IN?name_desc=false](https://data.worldbank.org/indicator/SP.DYN.LE00.IN?name_desc=false). Read this data into a DataFrame named `life_expectancy`. Note: When reading this dataset it, you may encounter an error. Modify your `read_csv` call to correct this **without modifying the original csv file**.\n"
+      ],
+      "id": "d39cfbad"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "life_expectancy = pd.read_csv(\n",
+        "    \"../data/Life expectancy at birth/API_SP.DYN.LE00.IN_DS2_en_csv_v2_31632.csv\",\n",
+        "    header=2,\n",
+        ")"
+      ],
+      "id": "fed332a2",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 22. Drop the Country Code, Indicator Name, and Indicator Code columns. Then use [`.melt()`](https://pandas.pydata.org/docs/reference/api/pandas.melt.html) to convert your data from wide to long. That is, instead of having one row per country and multiple colums per year, we want to have multiple rows per country and a single column for year. After melting, rename the columns to `Country`, `Year`, and `Life_Expectancy`.\n"
+      ],
+      "id": "a7b31406"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# drop undesired columns, melt to make data long, rename columns, and sort\n",
+        "life_expectancy = (\n",
+        "    life_expectancy.drop(\n",
+        "        columns=[\"Country Code\",\n",
+        "                 \"Indicator Name\",\n",
+        "                 \"Indicator Code\"]\n",
+        "                 )\n",
+        "    .melt(\n",
+        "        id_vars=\"Country Name\",\n",
+        "        var_name=\"Year\",\n",
+        "        value_name=\"Life Expectancy\",\n",
+        "          )\n",
+        "    .rename(\n",
+        "        columns={\"Country Name\": \"Country\"})\n",
+        "    .sort_values(\n",
+        "        [\"Country\", \"Year\"])\n",
+        ")\n",
+        "display(life_expectancy)"
+      ],
+      "id": "555d1827",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 23. What was the first country with a life expectancy to exceed 80?\n"
+      ],
+      "id": "32f01269"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# sort by year and find the first value that is >= 80\n",
+        "display( \n",
+        "    life_expectancy.sort_values([\"Year\"])\n",
+        "    .loc[life_expectancy[\"Life Expectancy\"] >= 80]\n",
+        "    .iloc[0]\n",
+        ")"
+      ],
+      "id": "12f9e617",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **The first country to have a life expectancy >= 80 was Japan in 1996.**\n",
+        "\n",
+        "#### 24. Merge `gdp_df` and `life_expectancy`, keeping all countries and years that appear in both DataFrames. Save the result to a new DataFrame named `gdp_le`. If you get any errors in doing this, read them carefully and correct them. Look at the first five rows of your new data frame to confirm it merged correctly. Also, check the last five rows to make sure the data is clean and as expected.\n"
+      ],
+      "id": "e1f4abbe"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Clean up dfs to merge\n",
+        "life_expectancy = life_expectancy.dropna()\n",
+        "life_expectancy[\"Year\"] = pd.to_numeric(life_expectancy[\"Year\"])\n",
+        "\n",
+        "# merge the dfs on the two columns, keeping only values in both dfs.\n",
+        "gdp_le = pd.merge(gdp_df, life_expectancy, on=[\"Country\", \"Year\"], how=\"inner\")\n",
+        "\n",
+        "#export to csv\n",
+        "gdp_le.to_csv(\"../data/gdp_le.csv\")\n",
+        "\n",
+        "display(gdp_le.head(), gdp_le.tail())"
+      ],
+      "id": "084cef0a",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **After dropping NaNs and changing columns to the appropriate datatypes, the two dataframes are merged and the resulting df looks clean at head and tail.**\n",
+        "\n",
+        "#### 25. Create a new DataFrame, named `gdp_le_2021` by extracting data for the year 2021 from `gdp_le`. How many countries have a life expectancy of at least 80 in 2021?\n"
+      ],
+      "id": "6b8d04b2"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Slice the year 2021\n",
+        "gdp_le_2021 = gdp_le[gdp_le[\"Year\"].isin([2021])].copy()\n",
+        "# .copy() makes this it's own dataframe so it no longer references the old dataframe object. \n",
+        "\n",
+        "# slice life expectancy > 80\n",
+        "display(gdp_le_2021.loc[gdp_le_2021[\"Life Expectancy\"] >= 80].count()['Country'])"
+      ],
+      "id": "678a2d98",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **31 countries have a life expectancy of at least 80 in 2021**\n",
+        "\n",
+        "#### 26. Find the countries that had the top 3 largest GDP per capita figures for 2021. Create a [seaborn FacetGrid](https://seaborn.pydata.org/generated/seaborn.FacetGrid.html) showing the change in life expectancy over time for these three countries. Each individual figure in the facet grid will represent a single country.\n",
+        "\n",
+        "- **the countries with the 3 largest GDP per capita in 2021 were Luxembourg, Singapore, and Ireland**\n"
+      ],
+      "id": "d2c3b5e3"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# find the countries with the 3 largest GDP per capita in 2021\n",
+        "# display(gdp_le_2021.nlargest(3, \"GDP_Per_Capita\"))\n",
+        "top_three_gdp = gdp_le_2021.nlargest(3, \"GDP_Per_Capita\")['Country']\n",
+        "\n",
+        "# slice out the desired countries into a new dataframe to plot\n",
+        "top_three_countries_le_df = life_expectancy[\n",
+        "    life_expectancy[\"Country\"].isin(top_three_gdp)]\n",
+        "\n",
+        "# create seaborn facet grid for the ∆LE over time for top three countries\n",
+        "grid =(\n",
+        "    sns.FacetGrid(top_three_countries_le_df,\n",
+        "                  col=\"Country\")\n",
+        "    .map_dataframe(sns.lineplot,\n",
+        "                   x=\"Year\",\n",
+        "                   y=\"Life Expectancy\"\n",
+        "    )\n",
+        ")\n",
+        "plt.subplots_adjust(top=0.85)\n",
+        "plt.suptitle(\"Change in life expectancy over time\");"
+      ],
+      "id": "21cac877",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "##### Plotly used below for practice. \n"
+      ],
+      "id": "7e9a9221"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "top_three_countries_le_df = top_three_countries_le_df.reset_index()\n",
+        "fig = (\n",
+        "    px.line(top_three_countries_le_df,\n",
+        "            x='Year',\n",
+        "            y='Life Expectancy',\n",
+        "            facet_col='Country',\n",
+        "            color='Country',\n",
+        "            title='2021 Three largest GDP per Capita - Life Expectancy')\n",
+        ")\n",
+        "\n",
+        "fig"
+      ],
+      "id": "5c414f9f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 27. Create a scatter plot of Life Expectancy vs GDP per Capita for the year 2021. What do you notice?\n"
+      ],
+      "id": "fc40af11"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "sns.scatterplot(gdp_le_2021, x=\"GDP_Per_Capita\", y=\"Life Expectancy\")\n",
+        "plt.title(\"GDP per capita vs Life Expectancy (2021)\")\n",
+        "plt.xlabel(\"GDP per capita ($)\")\n",
+        "plt.ylabel(\"Life Expectancy (yrs)\");"
+      ],
+      "id": "87566a31",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **The scatterplot indicates a positive association between GDP per capita and life expectancy that takes on a vaguely logarithmic shape, meaning that generally as one goes up the other also goes up, but there is a ceiling around 85 years where countries' GDP per capita can continue to increase, but the life expectancy rate of increase decreases. There can be no causation inferred from this data alone.**\n",
+        "\n",
+        "##### Plotly used below for practice\n"
+      ],
+      "id": "69a0c2ae"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "fig = (\n",
+        "    px.scatter(gdp_le_2021,\n",
+        "               x=\"GDP_Per_Capita\",\n",
+        "               y=\"Life Expectancy\",\n",
+        "               title='GDP per capita vs. Life Expectancy (2021)',\n",
+        "               color='Life Expectancy',\n",
+        "               hover_data=[\"GDP_Per_Capita\", \"Life Expectancy\", \"Country\"])\n",
+        "    .update_layout(xaxis_title=\"GDP per capita\")\n",
+        ")\n",
+        "fig"
+      ],
+      "id": "56e0ab06",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 28. Find the correlation between Life Expectancy and GDP per Capita for the year 2021. What is the meaning of this number?\n"
+      ],
+      "id": "26d93f69"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "print(\n",
+        "    \"correlation = \"\n",
+        "    + str(gdp_le_2021[\"GDP_Per_Capita\"]\n",
+        "          .corr(gdp_le_2021[\"Life Expectancy\"]))\n",
+        ")"
+      ],
+      "id": "874eb5c0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **Correlation (R) is a value between -1 and 1 which indicates the strength and type of association between two variables. A correlation of 0.745... indicates a moderately strong positive association between GDP per capita and life expectancy, meaning it is highly likely that to some extent, as one of those variables increases, so will the other.**\n",
+        "\n",
+        "#### 29. Add a column to `gdp_le_2021` and calculate the logarithm of GDP per capita. Find the correlation between the log of GDP per capita and life expectancy. How does this compare to the calculation in the previous part? Look at a scatter plot to see if the result of this calculation makes sense.\n"
+      ],
+      "id": "3903a361"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Add column: Log(GDP per Capita)\n",
+        "gdp_le_2021[\"Log(GDP/Cap)\"] = np.log(gdp_le_2021[\"GDP_Per_Capita\"])\n",
+        "R = gdp_le_2021[\"Log(GDP/Cap)\"].corr(gdp_le_2021[\"Life Expectancy\"])\n",
+        "print(\"correlation = \" + str(R))\n",
+        "\n",
+        "log_gdp_vs_le = sns.scatterplot(gdp_le_2021, x=\"Log(GDP/Cap)\", y=\"Life Expectancy\")\n",
+        "plt.title(\"Log(GDP per capita) vs Life Expectancy (2021)\")\n",
+        "plt.xlabel(\"Log(GDP per capita) ($)\")\n",
+        "plt.ylabel(\"Life Expectancy (yrs)\")\n",
+        "plt.text(7, 80, \"R = \" + str(round(R, 4)));"
+      ],
+      "id": "f4c2cedc",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **This correlation of 0.847 is even stronger than the previous correlation, meaning there is an even higher association between the log(gdp per capita) and life expectancy than just gdp per capita and L.E.\n",
+        "The scatter plot shows a more linear trend that is positively associated and fairly strong.** \n",
+        "\n",
+        "##### Plotly used below for practice\n"
+      ],
+      "id": "7086161a"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "fig = (\n",
+        "    px.scatter(gdp_le_2021,\n",
+        "               x=\"Log(GDP/Cap)\",\n",
+        "               y=\"Life Expectancy\",\n",
+        "               title='Log(GDP per capita) vs. Life Expectancy (2021)',\n",
+        "               color='Life Expectancy',\n",
+        "               hover_data=[\"Log(GDP/Cap)\", \"Life Expectancy\", \"Country\"],\n",
+        "               trendline='ols')\n",
+        ")\n",
+        "fig.add_annotation(x=11.75, y=75, text=\"R = \" + str(round(R, 4)), showarrow=False)\n",
+        "display(fig)"
+      ],
+      "id": "44b2757f",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Bonus: Solo Exploration:\n",
+        "\n",
+        "#### 1. Choose and download another data set from the UN data [http://data.un.org/Explorer.aspx](http://data.un.org/Explorer.aspx) to explore. You may want to combine your new dataset with one or both of the datasets that you already worked with. Report any interesting correlations or trends that you find. \n"
+      ],
+      "id": "5434a5ba"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "financial_df = pd.DataFrame(pd.read_csv('../data/UNdata_Export_20241010_220413212.csv',\n",
+        "                                        dtype={'Year':'int16', 'Country or Area':'category',\n",
+        "                                               'Description':'category', 'Magnitude':'category'},\n",
+        "                                        usecols=range(1,6))).rename(columns={'Country or Area':'Country', 'Magnitude':'Currency'})\n",
+        "display(financial_df.head())\n",
+        "financial_df.info()\n",
+        "financial_df.shape\n",
+        "financial_df.describe()\n",
+        "financial_df\n",
+        "net_worth_global = financial_df[financial_df['Description'].isin(['NET WORTH', 'NET FINANCIAL WORTH [62-63]'])].sort_values('Value')\n",
+        "net_worth_global"
+      ],
+      "id": "dbbacfb8",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 2.    If time allows, check out the plotly library to add additional interativity to your plots. [https://plotly.com/python/plotly-express/](https://plotly.com/python/plotly-express/).\n",
+        "\n",
+        "## UN Data Exploration Bonus Questions\n",
+        "\n",
+        "#### 1. Let's compare the median life expectacy for each across all of the years of data that we have. Perform a groupby on both Year and Continent and then aggregate using the median and save the results to a new object.  \n",
+        "\ta. What type of object results from this?  \n",
+        "\tb. Look at the index of the resulting object. What do you notice about it?  \n",
+        "\tc. Use .loc to select the median life expectancy for Asia in 2010.  \n",
+        "\td. Use .loc to select the median life expectancy for both Asia and Africa in 2010.  \n",
+        "\te. Use .loc to select the values for all continents for the year 2010.  \n",
+        "\tf. Use .loc to select the median life expectancy for Asia across all years. Hint: One way to do this is to use the swaplevels method.  \n",
+        "\n",
+        "# Clean up dfs for merge\n"
+      ],
+      "id": "f05b7e5e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "life_expectancy = life_expectancy.dropna()\n",
+        "life_expectancy[\"Year\"] = pd.to_numeric(life_expectancy[\"Year\"])\n",
+        "\n",
+        "# merge the dfs on the two columns, keeping only values in both dfs.\n",
+        "life_exp_cont = pd.merge(life_expectancy, continents, on=\"Country\", how=\"inner\")\n",
+        "\n",
+        "# Group by year and continent and aggregate median on life expectancy\n",
+        "medians_le = life_exp_cont.groupby([\"Year\", \"Continent\"])[\"Life Expectancy\"].median()\n",
+        "display(type(medians_le))\n",
+        "\n",
+        "# Look at the index\n",
+        "medians_le.index\n",
+        "\n",
+        "# median le for asia 2010\n",
+        "print(medians_le.loc[(2010, \"Asia\")])\n",
+        "\n",
+        "# median le for asia and africa in 2010\n",
+        "display(medians_le.loc[[(2010, \"Asia\"), (2010, \"Africa\")]])\n",
+        "\n",
+        "# all continents 2010\n",
+        "display(medians_le.loc[(2010)])\n",
+        "\n",
+        "# median for asia across all years\n",
+        "medians_le.swaplevel().loc[\"Asia\"]"
+      ],
+      "id": "dbe11be8",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 2. Group gdp_le by both Year and Continent and find the min, median, and max values for both gdp per capita and life expectancy. Hint: You may want to use the [agg method](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.agg.html).  \n",
+        "\ta. Look at the columns of the resulting object. What do you notice?  \n",
+        "\tb. Select the median gdp per capita value for Asia in 2010.\n"
+      ],
+      "id": "662b6e6e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# grouping by year and continent and aggregating min, median, max for GDP and Life exp.\n",
+        "gdp_le_aggs = gdp_le.groupby([\"Year\", \"Continent\"])[\n",
+        "    [\"Life Expectancy\", \"GDP_Per_Capita\"]\n",
+        "].agg([\"min\", \"median\", \"max\"])\n",
+        "\n",
+        "# median gdp per capita for asia, 2010\n",
+        "display(\n",
+        "    \"Asia, 2010 median GDPpC = \"\n",
+        "    + str(gdp_le_aggs.loc[(2010, \"Asia\")][(\"GDP_Per_Capita\", \"median\")])\n",
+        ")"
+      ],
+      "id": "9ed1dcdb",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "- **the columns are also labeled with tuples.**\n",
+        "\n",
+        "#### 3. In this question, we'll see how the median gdp per capita has changed over time. Start by creating a Series, gdp_median_per_year by grouping by the Year variable and calculating the median gdp per capita.  \n",
+        "\ta. Convert gdp_median_per_year to a DataFrame by using the [reset_index method](https://pandas.pydata.org/docs/reference/api/pandas.Series.reset_index.html).  \n",
+        "\tb. The [shift method](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.shift.html) will allow you to compare values across rows. Use this method to create a new column showing the change in gdp per capita since the prior year.  \n",
+        "\tc. How many times was there a drop in median gdp per capita from one year to the next?  \n"
+      ],
+      "id": "126e77b2"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_median_per_year = gdp_le.groupby(['Year'])['GDP_Per_Capita'].median().reset_index()\n",
+        "\n",
+        "# create a new column showing the change in gdp per capita since the prior year.  \n",
+        "gdp_median_per_year['Shift'] = gdp_median_per_year['GDP_Per_Capita'].shift(periods=1).fillna(value=0)\n",
+        "gdp_median_per_year['Difference'] = gdp_median_per_year['GDP_Per_Capita'] - gdp_median_per_year['Shift']\n",
+        "\n",
+        "# How many times was there a drop in median gdp per capita from one year to the next?\n",
+        "display(gdp_median_per_year[gdp_median_per_year['Difference'] < 0]['GDP_Per_Capita'].count())"
+      ],
+      "id": "a72d93a0",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 4. Now, let's expand on the prior question to find the change in GDP from year to year for each country.  \n",
+        "\ta. Add a new column to the gdp_le DataFrame showing the change in gdp per capita from the prior year for that country. Hint: You can combine groupby with the shift method.  \n",
+        "\tb. Which country had the largest one year increase in gdp per capita? Which had the largest one year drop in gdp per capita?\n"
+      ],
+      "id": "c80df7ce"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_le_countries_grouped = gdp_le.groupby(['Country', 'Year'])['GDP_Per_Capita'].median().reset_index()\n",
+        "gdp_le_countries_grouped[\"Previous Year's GDPPC\"] = gdp_le_countries_grouped.groupby(['Country'])['GDP_Per_Capita'].shift()\n",
+        "gdp_le_countries_grouped['Difference'] = gdp_le_countries_grouped['GDP_Per_Capita'] - gdp_le_countries_grouped[\"Previous Year's GDPPC\"]\n",
+        "largest_increase = gdp_le_countries_grouped[gdp_le_countries_grouped[\"Difference\"] > 0].sort_values('Difference', ascending=False).reset_index().iloc[0]\n",
+        "largest_decrease = gdp_le_countries_grouped[gdp_le_countries_grouped[\"Difference\"] < 0].sort_values('Difference').reset_index().iloc[0]\n",
+        "display([largest_increase, largest_decrease])"
+      ],
+      "id": "a62629f5",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 5. When looking at time series data, there can often be a large amount of observation to observation variability, making it more difficult to see general trends. This variability can be smoothed out by calculating rolling averages. We'll see how in this question.\n",
+        "\n",
+        "\ta. First, filter gdp_le down to just the rows for the United States and save the result to a DataFrame named gdp_le_us.  \n",
+        "\tb. Use [rolling](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rolling.html) to calculate the 3-year moving average of gdp per capita for the US.  \n",
+        "\tc. Plot both the original gdp per capita values and the rolling average on the same plot.\n"
+      ],
+      "id": "7ebd8f69"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_le_us = gdp_le[gdp_le['Country'] == 'United States'].sort_values('Year')\n",
+        "gdp_le_us['3yr rolling avg - GDP'] = gdp_le_us['GDP_Per_Capita'].rolling(3).mean()\n",
+        "# display(gdp_le_us)\n",
+        "gdp_le_us.plot(\n",
+        "    kind='line', x='Year', y=['GDP_Per_Capita', '3yr rolling avg - GDP'],\n",
+        "    title='GDP per capita and 3 yr rolling average', \n",
+        "    xlabel='Year', ylabel='GDP Per Capita ($)',\n",
+        "    legend=True)"
+      ],
+      "id": "404a4b5d",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### 6. When working with large datasets, it can sometimes pay off to be mindful of what data types you are using for each variable.  \n",
+        "\ta. Create a new column, Continent_Category by converting the Continent column to a [category](https://pandas.pydata.org/docs/user_guide/categorical.html).  \n",
+        "\tb. Use the memory_usage method to compare the memory used by the original Continent column compared to the category version.  \n",
+        "\tc. You can also sometimes get speedups for groupby operations by using category datatypes. In Jupyter, if you want to estimate how long it takes to run a block of code, you can add the %%timeit magic to the top of a cell. Compare doing a groupby + aggregation on the original Continent column compared to the Continent_Category column.  \n",
+        "\td. You can also sometimes save memory usage by adjusting the size that is stored for integer values. By default, the int64 type is used which can store values between –9223372036854775808 and 9223372036854775807. However, for the Year variable, we really don't need that large of a range. We could get by with a 16 bit integer, whose range is -32768 to 32768. Convert the Year column to int16 type and then compare the memory usage.  \n",
+        "\te. Finally, you don't have to make these datatype changes after the data has been read in. Add some parameters to the read_csv call that imports the GDP data. Read in only the needed columns (not the Value Footnotes column). Also, read in the Country or Area column as a category type and the Year column as an int16 type.\n"
+      ],
+      "id": "ae8f748d"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "gdp_le['Continent_Category'] = gdp_le[\"Continent\"].astype(\"category\")\n",
+        "gdp_le['Year'] = gdp_le['Year'].astype('int16')\n",
+        "gdp_le.memory_usage()\n",
+        "gdp_df_bonus = pd.DataFrame(pd.read_csv(\"../data/gdp_per_capita.csv\", usecols=range(0,3), dtype={'Year':'int16', 'Country or Area':'category'}))\n",
+        "display(gdp_df_bonus)\n",
+        "gdp_df_bonus.memory_usage()"
+      ],
+      "id": "d0979ae4",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "base",
+      "language": "python",
+      "name": "python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
